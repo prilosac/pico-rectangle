@@ -34,7 +34,7 @@ Coords coords(float xFloat, float yFloat) {
 }
 
 
-GCReport getGCReport(GpioToButtonSets::F1::ButtonSet buttonSet) {
+GCReport getGCReport(GpioToButtonSets::F1::ButtonSet buttonSet, bool crouchWalkOS /*= true*/) {
 
     GpioToButtonSets::F1::ButtonSet bs = buttonSet; // Alterable copy
 
@@ -110,7 +110,7 @@ GCReport getGCReport(GpioToButtonSets::F1::ButtonSet buttonSet) {
                 else xy = coords(0.3125, 0.7375);
             }
         }
-        else if (vertical && !readUp){ // in qudarant 3 or 4
+        else if (crouchWalkOS && vertical && !readUp){ // in qudarant 3 or 4
             xy = coords(0.7,0.6875);
         }
         else xy = coords(0.7,0.7);

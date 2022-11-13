@@ -40,13 +40,13 @@ int main() {
     #if USE_UART0
     // Initialise UART 0
     uart_init(uart0, 115200);
- 
+
     // Set the GPIO pin mux to the UART - 0 is TX, 1 is RX
     gpio_set_function(0, GPIO_FUNC_UART);
     gpio_set_function(1, GPIO_FUNC_UART);
     #endif
 
-    const uint8_t keyboardPin = 
+    const uint8_t keyboardPin =
     #if USE_UART0
     3
     #else
@@ -67,7 +67,7 @@ int main() {
 
     // 22 - GP17 - Up : runtime remapping
     if (!gpio_get(17)) Other::enterRuntimeRemappingMode();
-    
+
     gpio_init(gcDataPin);
     gpio_set_dir(gcDataPin, GPIO_IN);
     gpio_pull_up(gcDataPin);
@@ -77,7 +77,7 @@ int main() {
     while ( time_us_32() - origin < 500'000 ) {
         if (!gpio_get(gcDataPin)) goto stateLabel__forceJoybusEntry;
     }
-    
+
     /* Mode selection logic */
 
     // Not plugged through USB =>  Joybus
@@ -95,13 +95,13 @@ int main() {
                 return DACAlgorithms::UltimateF1::getGCReport(GpioToButtonSets::F1::defaultConversion());
             });
         }
-        
+
         // Else: F1 / Melee
         CommunicationProtocols::Joybus::enterMode(gcDataPin, [](){ return DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()); });
     }
 
     // Else:
-    
+
     // 17 - GP13 - CLeft - Melee / XInput
     if (!gpio_get(13)) USBConfigurations::Xbox360::enterMode([](){
         USBConfigurations::Xbox360::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));
