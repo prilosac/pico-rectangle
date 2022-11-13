@@ -9,6 +9,8 @@ namespace MeleeF1 {
 
 bool banParasolDashing = false;
 bool banSlightSideB = false;
+bool banTripleSdi = false;
+bool banPivotTilts = false;
 
 // 2 IP declarations
 bool left_wasPressed = false;
@@ -20,6 +22,10 @@ bool left_outlawUntilRelease = false;
 bool right_outlawUntilRelease = false;
 bool up_outlawUntilRelease = false;
 bool down_outlawUntilRelease = false;
+
+bool sdi_lockout_cardinal = false;
+bool sdi_lockout_active = false;
+bool pivot_tilt_lockout_active = false;
 
 struct Coords {
     uint8_t x;
@@ -41,7 +47,7 @@ GCReport getGCReport(GpioToButtonSets::F1::ButtonSet buttonSet) {
     GCReport gcReport = defaultGcReport;
 
     /* 2IP No reactivation */
-    
+
     if (left_wasPressed && bs.left && bs.right && !right_wasPressed) left_outlawUntilRelease=true;
     if (right_wasPressed && bs.left && bs.right && !left_wasPressed) right_outlawUntilRelease=true;
     if (up_wasPressed && bs.up && bs.down && !down_wasPressed) up_outlawUntilRelease=true;
@@ -113,13 +119,25 @@ GCReport getGCReport(GpioToButtonSets::F1::ButtonSet buttonSet) {
         else xy = coords(0.7,0.7);
     }
     else if (horizontal) {
-        if (bs.mx == bs.my) xy = coords(1.0, 0.0);
+        if (bs.mx == bs.my) {
+            sdiLockoutWindow = true;
+            add_alarm_in_ms(-117, [&sdiLockoutCardinal](){ sdiLockoutWindow = false; }
+            xy = coords(1.0, 0.0);
+        }
         else if (bs.mx) xy =  (buttonSet.left && buttonSet.right) ? coords(1.0, 0.0) : coords(0.6625, 0.0);
         else xy = ((banSlightSideB && bs.b) || buttonSet.left && buttonSet.right) ? coords(1.0, 0.0) : coords(0.3375, 0.0);
         // Read the original rectangleInput to bypass SOCD
     }
     else if (vertical) {
-        if (bs.mx == bs.my) xy = coords(0.0, 1.0);
+        if (bs.mx == bs.my) {
+            if (vertical && !readUp){
+                // Don't apply SDI lockout to down inputs. It can interfere with legitimate movement, and SDIing down
+                // isn't really the problematic SDI we're addressing (almost always up/side)
+                sdiLockoutWindow = true;
+                add_alarm_in_ms(-117, [&sdiLockoutCardinal](){ sdiLockoutWindow = false; }
+            }
+            xy = coords(0.0, 1.0);
+        }
         else if (bs.mx) xy=coords(0.0, 0.5375);
         else xy = coords(0.0, 0.7375);
     }
