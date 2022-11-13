@@ -7,10 +7,10 @@ namespace MeleeF1 {
 #define coord(x) ((uint8_t)(128. + 80.*x + 0.5))
 #define oppositeCoord(x) -((uint8_t)x)
 
-bool banParasolDashing = false;
-bool banSlightSideB = false;
-bool banTripleSdi = false;
-bool banPivotTilts = false;
+bool banParasolDashing = true;
+bool banSlightSideB = true;
+bool banTripleSdi = true;
+bool banPivotTilts = true;
 
 // 2 IP declarations
 bool left_wasPressed = false;
@@ -115,6 +115,9 @@ GCReport getGCReport(GpioToButtonSets::F1::ButtonSet buttonSet) {
                 else if (bs.cRight) xy = coords(0.6375, 0.7625);
                 else xy = coords(0.3125, 0.7375);
             }
+        }
+        else if (vertical && !readUp){ // in quadrant 3 or 4
+            xy = coords(0.7,0.6875);
         }
         else xy = coords(0.7,0.7);
     }
