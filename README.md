@@ -122,6 +122,11 @@ As of this release, 13 modes are built-in.
 
 - Plugged into USB, nothing pressed => Melee GCC to USB adapter mode (Melee F1 DAC algorithm + Adapter USB configuration).
 
+**Melee Mode Modifiers**
+By default, melee mode will include the CrouchWalk OS + Neutral SOCD (otherwise it is standard B0XX/F1 behaviour).
+- GP26 (by default, B) will enable 2IP SOCD instead of Neutral SOCD
+- GP27 (by default, R) will disable the CrouchWalk OS, giving coordinated (0.7, 0.7) in quadrants 3 and 4
+
 <a name="advisedModes"/>
 
 **The advised modes are the following**:
@@ -231,6 +236,16 @@ The remapping will be committed when you've pressed 20 different buttons. You mu
 
 If it doesn't appear to work, double check all 20 of your buttons work. Note that runtime remapping doesn't change what buttons you need to press to enter a given mode, as it is the pin number that matters.
 
+<a name="compiling"/>
+
+### How to compile the software:
+1. Inside the pico-rectangle project folder, create a "build" directory 
+2. Make sure the pico-sdk is installed and pointed to by CMakeLists.txt (not the path should be relative to your "build" directory, not to CMakeLists.txt itself
+    - follow section 2.1 of <a href="https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf"> the pico getting started guide</a> to get this installed
+3. from the build folder, run
+    - `cmake ..`
+    - `make`
+
 <a name="howToWireTheBoard"/>
 
 ### How to wire the board:
@@ -265,7 +280,7 @@ Only half/some of my buttons do anything -> Double-check your common ground betw
 
 <a name="contact"/>
 
-### Contact
+### Original Author Contact (Do not contact them with issues about this repository!)
 
 Discord: Arte#9281
 

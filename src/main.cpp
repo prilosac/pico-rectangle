@@ -54,7 +54,7 @@ int main() {
     #endif
     ;
 
-    std::vector<uint8_t> modePins = { 22, 21, 20, 16, 17, 14, 13, 7, 6, 5, 4, 2, keyboardPin }; // DO NOT USE PIN GP15
+    std::vector<uint8_t> modePins = { 27, 26, 22, 21, 20, 16, 17, 14, 13, 7, 6, 5, 4, 2, keyboardPin }; // DO NOT USE PIN GP15
 
     for (uint8_t modePin : modePins) {
         gpio_init(modePin);
@@ -71,6 +71,14 @@ int main() {
     gpio_init(gcDataPin);
     gpio_set_dir(gcDataPin, GPIO_IN);
     gpio_pull_up(gcDataPin);
+
+    /* Melee Mode Modifiers */
+    bool meleeCrouchWalkOS = true;
+    bool meleeNeutralSOCD = true;
+    // Hold R to disable CrouchWalk OS
+    if (!gpio_get(27)) meleeCrouchWalkOS = false;
+    // Hold B to disable Neutral SOCD
+    if (!gpio_get(26)) meleeNeutralSOCD = false;
 
     uint32_t origin = time_us_32();
     while ( time_us_32() - origin < 100'000 );
@@ -97,15 +105,38 @@ int main() {
         }
 
         // Else: F1 / Melee
-        CommunicationProtocols::Joybus::enterMode(gcDataPin, [](){ return DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()); });
+        if (meleeCrouchWalkOS && meleeNeutralSOCD){
+            CommunicationProtocols::Joybus::enterMode(gcDataPin, [](){ return DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, true); });
+        
+        }
+        else if (meleeCrouchWalkOS){
+            CommunicationProtocols::Joybus::enterMode(gcDataPin, [](){ return DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, false); });
+        }
+        else if (meleeNeutralSOCD){
+            CommunicationProtocols::Joybus::enterMode(gcDataPin, [](){ return DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, true); });
+        }
+        else {
+            CommunicationProtocols::Joybus::enterMode(gcDataPin, [](){ return DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, false); });
+        }
     }
 
     // Else:
 
     // 17 - GP13 - CLeft - Melee / XInput
-    if (!gpio_get(13)) USBConfigurations::Xbox360::enterMode([](){
-        USBConfigurations::Xbox360::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));
-    });
+    if (!gpio_get(13)) {
+        if (meleeCrouchWalkOS && meleeNeutralSOCD){
+            USBConfigurations::Xbox360::enterMode([](){ USBConfigurations::Xbox360::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, true)); });
+        }
+        else if (meleeCrouchWalkOS){
+            USBConfigurations::Xbox360::enterMode([](){ USBConfigurations::Xbox360::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, false)); });
+        }
+        else if (meleeNeutralSOCD){
+            USBConfigurations::Xbox360::enterMode([](){ USBConfigurations::Xbox360::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, true)); });
+        }
+        else {
+            USBConfigurations::Xbox360::enterMode([](){ USBConfigurations::Xbox360::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, false)); });
+        }
+    }
 
     // 19 - GP14 - A - Xbox360/Xbox360 (aka XInput)
     if (!gpio_get(14)) USBConfigurations::Xbox360::enterMode([](){
@@ -113,9 +144,20 @@ int main() {
     });
 
     // 27 - GP21 - X - Melee / HID
-    if (!gpio_get(21)) USBConfigurations::HidWithTriggers::enterMode([](){
-        USBConfigurations::HidWithTriggers::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));
-    });
+    if (!gpio_get(21)) {
+        if (meleeCrouchWalkOS && meleeNeutralSOCD){
+            USBConfigurations::HidWithTriggers::enterMode([](){USBConfigurations::HidWithTriggers::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, true)); });
+        }
+        else if (meleeCrouchWalkOS){
+            USBConfigurations::HidWithTriggers::enterMode([](){USBConfigurations::HidWithTriggers::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, false)); });
+        }
+        else if (meleeNeutralSOCD){
+            USBConfigurations::HidWithTriggers::enterMode([](){USBConfigurations::HidWithTriggers::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, true)); });
+        }
+        else {
+            USBConfigurations::HidWithTriggers::enterMode([](){USBConfigurations::HidWithTriggers::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, false)); });
+        }
+    }
 
     // 29 - GP22 - Y - Ult / HID
     if (!gpio_get(22)) USBConfigurations::HidWithTriggers::enterMode([](){
@@ -143,9 +185,20 @@ int main() {
     });
 
     // 7 - GP5 - L: F1 / melee / wired_fight_pad_pro
-    if (!gpio_get(5)) USBConfigurations::WiredFightPadPro::enterMode([](){
-        USBConfigurations::WiredFightPadPro::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));
-    });
+    if (!gpio_get(5)) {
+        if (meleeCrouchWalkOS && meleeNeutralSOCD){
+            USBConfigurations::WiredFightPadPro::enterMode([](){ USBConfigurations::WiredFightPadPro::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, true)); });
+        }
+        else if (meleeCrouchWalkOS){
+            USBConfigurations::WiredFightPadPro::enterMode([](){ USBConfigurations::WiredFightPadPro::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, false)); });
+        }
+        else if (meleeNeutralSOCD){
+            USBConfigurations::WiredFightPadPro::enterMode([](){ USBConfigurations::WiredFightPadPro::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, true)); });
+        }
+        else {
+            USBConfigurations::WiredFightPadPro::enterMode([](){ USBConfigurations::WiredFightPadPro::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, false)); });
+        }
+    }
 
     // 6 - GP4 - Left: F1 / wired_fight_pad_pro_default / wired_fight_pad_pro
     if (!gpio_get(4)) USBConfigurations::WiredFightPadPro::enterMode([](){
@@ -158,8 +211,24 @@ int main() {
     });
 
     // Default: F1 / melee / adapter
-    USBConfigurations::GccToUsbAdapter::enterMode(
-        [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));},
-        [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::UltimateF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));}
-        );
+    if (meleeCrouchWalkOS && meleeNeutralSOCD){
+        USBConfigurations::GccToUsbAdapter::enterMode(
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, true));},
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::UltimateF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));} );
+    }
+    else if (meleeCrouchWalkOS){
+        USBConfigurations::GccToUsbAdapter::enterMode(
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), true, false));},
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::UltimateF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));} );
+    }
+    else if (meleeNeutralSOCD){
+        USBConfigurations::GccToUsbAdapter::enterMode(
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, true));},
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::UltimateF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));} );
+    }
+    else {
+        USBConfigurations::GccToUsbAdapter::enterMode(
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::MeleeF1::getGCReport(GpioToButtonSets::F1::defaultConversion(), false, false));},
+            [](){USBConfigurations::GccToUsbAdapter::actuateReportFromGCState(DACAlgorithms::UltimateF1::getGCReport(GpioToButtonSets::F1::defaultConversion()));} );
+    }
 }
